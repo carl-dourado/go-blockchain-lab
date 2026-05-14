@@ -118,6 +118,52 @@ const explorerHTML = `<!doctype html>
       margin-bottom: 14px;
     }
 
+    .visual-panel {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .visual-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 18px 18px 0;
+    }
+
+    .visual-head p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .visual-badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      padding: 6px 10px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .chain-canvas-wrap {
+      position: relative;
+      height: 330px;
+      margin-top: 10px;
+      border-top: 1px solid rgba(36, 53, 83, 0.62);
+      background:
+        linear-gradient(rgba(229, 237, 248, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(229, 237, 248, 0.035) 1px, transparent 1px),
+        radial-gradient(circle at 50% 30%, rgba(0, 173, 216, 0.12), transparent 26rem);
+      background-size: 34px 34px, 34px 34px, auto;
+    }
+
+    #chain-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
     .panel-head {
       display: flex;
       justify-content: space-between;
@@ -292,6 +338,15 @@ const explorerHTML = `<!doctype html>
         justify-content: start;
       }
 
+      .visual-head {
+        align-items: start;
+        display: grid;
+      }
+
+      .chain-canvas-wrap {
+        height: 290px;
+      }
+
       .grid,
       form,
       .layout {
@@ -326,6 +381,19 @@ const explorerHTML = `<!doctype html>
       <article class="stat"><span>pending</span><strong id="pending-count">-</strong></article>
       <article class="stat"><span>valid</span><strong id="valid">-</strong></article>
       <article class="stat"><span>latest hash</span><strong class="hash" id="latest-hash">-</strong></article>
+    </section>
+
+    <section class="panel visual-panel">
+      <div class="visual-head">
+        <div>
+          <h2>Chain Visualizer</h2>
+          <p>Blocks are cubes; hashes are the chain links between them.</p>
+        </div>
+        <span class="visual-badge" id="visual-status">waiting for chain</span>
+      </div>
+      <div class="chain-canvas-wrap">
+        <canvas id="chain-canvas" width="1120" height="330" aria-label="Animated blockchain cubes"></canvas>
+      </div>
     </section>
 
     <section class="panel">
@@ -374,12 +442,18 @@ const explorerHTML = `<!doctype html>
 
   <script>
     const state = {
-      busy: false
+      busy: false,
+      chain: [],
+      validation: { valid: true },
+      animationStarted: false,
+      visualTime: 0
     };
 
     const $ = (id) => document.getElementById(id);
     const shortHash = (hash) => hash ? hash.slice(0, 14) + '...' + hash.slice(-8) : '-';
     const formatDate = (value) => value ? new Date(value).toLocaleString() : '-';
+    const canvas = $('chain-canvas');
+    const ctx = canvas.getContext('2d');
 
     function setStatus(message, tone = '') {
       const node = $('status');
@@ -498,6 +572,190 @@ const explorerHTML = `<!doctype html>
       records.forEach((record) => list.appendChild(renderRecord(record)));
     }
 
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+      canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function cubePoints(x, y, width, height, depth) {
+      return {
+        top: [
+          [x, y - height],
+          [x + width * 0.5, y - height - depth],
+          [x + width, y - height],
+          [x + width * 0.5, y - height + depth]
+        ],
+        left: [
+          [x, y - height],
+          [x + width * 0.5, y - height + depth],
+          [x + width * 0.5, y + depth],
+          [x, y]
+        ],
+        right: [
+          [x + width, y - height],
+          [x + width * 0.5, y - height + depth],
+          [x + width * 0.5, y + depth],
+          [x + width, y]
+        ]
+      };
+    }
+
+    function drawPolygon(points, fill, stroke = 'rgba(229, 237, 248, 0.18)') {
+      ctx.beginPath();
+      points.forEach(([x, y], index) => {
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    function drawCube(block, x, y, size, valid, phase) {
+      const depth = size * 0.28;
+      const bob = Math.sin(phase + block.index * 0.8) * 4;
+      const points = cubePoints(x, y + bob, size, size * 0.72, depth);
+      const accent = valid ? '0, 173, 216' : '249, 112, 102';
+
+      ctx.shadowColor = 'rgba(' + accent + ', 0.36)';
+      ctx.shadowBlur = 18;
+      drawPolygon(points.top, 'rgba(' + accent + ', 0.42)');
+      ctx.shadowBlur = 0;
+      drawPolygon(points.left, 'rgba(16, 26, 44, 0.98)');
+      drawPolygon(points.right, 'rgba(' + accent + ', 0.22)');
+
+      ctx.fillStyle = valid ? '#e5edf8' : '#ffe2df';
+      ctx.font = '700 14px ui-monospace, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('#' + block.index, x + size * 0.5, y + bob - size * 0.28);
+
+      ctx.fillStyle = valid ? '#8ba0ba' : '#f97066';
+      ctx.font = '11px ui-monospace, monospace';
+      ctx.fillText(shortHash(block.hash), x + size * 0.5, y + bob + depth + 18);
+    }
+
+    function drawChainLink(x1, y1, x2, y2, index, valid, phase) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const angle = Math.atan2(dy, dx);
+      const distance = Math.hypot(dx, dy);
+      const links = Math.max(2, Math.floor(distance / 32));
+      const accent = valid ? '#00add8' : '#f97066';
+
+      ctx.save();
+      ctx.translate(x1, y1);
+      ctx.rotate(angle);
+
+      for (let i = 0; i < links; i++) {
+        const progress = (i + 0.5) / links;
+        const sway = Math.sin(phase * 1.8 + i * 0.7 + index) * 5;
+        const x = distance * progress;
+
+        ctx.save();
+        ctx.translate(x, sway);
+        ctx.rotate(i % 2 === 0 ? 0.35 : -0.35);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 13, 7, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = accent;
+        ctx.globalAlpha = valid ? 0.78 : 0.95;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function visibleBlocks(blocks) {
+      if (blocks.length <= 7) return blocks;
+      return blocks.slice(-7);
+    }
+
+    function drawVisualizer() {
+      resizeCanvas();
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const blocks = visibleBlocks(state.chain);
+      const valid = state.validation.valid !== false;
+      const phase = state.visualTime;
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.fillStyle = 'rgba(5, 12, 24, 0.34)';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = 'rgba(139, 160, 186, 0.18)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(24, height * 0.72);
+      ctx.bezierCurveTo(width * 0.28, height * 0.58, width * 0.62, height * 0.86, width - 24, height * 0.68);
+      ctx.stroke();
+
+      if (!blocks.length) {
+        ctx.fillStyle = '#8ba0ba';
+        ctx.font = '14px ui-monospace, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('no blocks yet', width * 0.5, height * 0.5);
+        return;
+      }
+
+      const gap = width / (blocks.length + 0.8);
+      const size = Math.max(54, Math.min(92, gap * 0.58));
+      const positions = blocks.map((block, index) => ({
+        block,
+        x: gap * (index + 0.42),
+        y: height * 0.64 + Math.sin(index * 0.9) * 12,
+        size
+      }));
+
+      positions.forEach((current, index) => {
+        const next = positions[index + 1];
+        if (!next) return;
+
+        drawChainLink(
+          current.x + current.size * 0.92,
+          current.y - current.size * 0.26,
+          next.x + next.size * 0.08,
+          next.y - next.size * 0.24,
+          index,
+          valid,
+          phase
+        );
+      });
+
+      positions.forEach(({ block, x, y, size }) => {
+        drawCube(block, x, y, size, valid, phase);
+      });
+
+      if (state.chain.length > blocks.length) {
+        ctx.fillStyle = '#8ba0ba';
+        ctx.font = '12px ui-monospace, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('showing latest ' + blocks.length + ' of ' + state.chain.length + ' blocks', 18, height - 18);
+      }
+    }
+
+    function animateVisualizer() {
+      state.visualTime += 0.016;
+      drawVisualizer();
+      window.requestAnimationFrame(animateVisualizer);
+    }
+
+    function startVisualizer() {
+      if (state.animationStarted) return;
+      state.animationStarted = true;
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      window.requestAnimationFrame(animateVisualizer);
+    }
+
     async function load() {
       const [chain, pending, validation] = await Promise.all([
         request('/chain'),
@@ -511,9 +769,14 @@ const explorerHTML = `<!doctype html>
       $('valid').textContent = validation.valid ? 'yes' : 'no';
       $('valid').style.color = validation.valid ? 'var(--ok)' : 'var(--bad)';
       $('latest-hash').textContent = shortHash(latest && latest.hash);
+      $('visual-status').textContent = validation.valid ? 'chain links locked' : 'broken chain detected';
+      $('visual-status').style.color = validation.valid ? 'var(--muted)' : 'var(--bad)';
 
+      state.chain = chain;
+      state.validation = validation;
       renderBlocks(chain);
       renderPending(pending);
+      startVisualizer();
     }
 
     async function run(action, success) {

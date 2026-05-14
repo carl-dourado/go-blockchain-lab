@@ -83,4 +83,8 @@ func TestExplorerPageServed(t *testing.T) {
 	if !strings.Contains(response.Body.String(), "Go Blockchain Lab") {
 		t.Fatal("expected explorer page to contain app title")
 	}
+
+	if !strings.Contains(response.Body.String(), "chain-canvas") {
+		t.Fatal("expected explorer page to contain chain canvas")
+	}
 }
