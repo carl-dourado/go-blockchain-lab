@@ -80,11 +80,16 @@ func TestExplorerPageServed(t *testing.T) {
 		t.Fatalf("expected html content type, got %q", contentType)
 	}
 
-	if !strings.Contains(response.Body.String(), "Go Blockchain Lab") {
+	body := response.Body.String()
+	if !strings.Contains(body, "Go Blockchain Lab") {
 		t.Fatal("expected explorer page to contain app title")
 	}
 
-	if !strings.Contains(response.Body.String(), "chain-art") {
+	if !strings.Contains(body, "chain-art") {
 		t.Fatal("expected explorer page to contain ASCII chain art")
+	}
+
+	if !strings.Contains(body, "animationTick") || !strings.Contains(body, "selectVisibleBlock") {
+		t.Fatal("expected explorer page to contain animated interactive ASCII chain")
 	}
 }

@@ -154,6 +154,15 @@ const explorerHTML = `<!doctype html>
       color: var(--yellow);
     }
 
+    #chain-art {
+      cursor: pointer;
+    }
+
+    #chain-art:focus {
+      outline: 1px solid var(--line);
+      outline-offset: 4px;
+    }
+
     .terminal-form {
       display: grid;
       gap: 12px;
@@ -317,7 +326,7 @@ ZZZzz /,.-''      -.  ;-;;
       </div>
     </header>
 
-    <pre id="chain-art" class="ascii-output is-blue">+----------------------------+
+    <pre id="chain-art" class="ascii-output is-blue" tabindex="0" title="Clique em um cubo ou use as setas para selecionar blocos">+----------------------------+
 | loading ASCII blockchain  |
 +----------------------------+</pre>
 
@@ -365,7 +374,12 @@ ZZZzz /,.-''      -.  ;-;;
 
   <script>
     const state = {
-      busy: false
+      busy: false,
+      chain: [],
+      pending: [],
+      validation: { valid: true },
+      animationTick: 0,
+      selectedIndex: null
     };
 
     const $ = (id) => document.getElementById(id);
@@ -427,26 +441,52 @@ ZZZzz /,.-''      -.  ;-;;
       return payload;
     }
 
+    function visibleBlocks(blocks) {
+      return blocks.length > 5 ? blocks.slice(-5) : blocks;
+    }
+
+    function ensureSelection(chain) {
+      if (!chain.length) {
+        state.selectedIndex = null;
+        return;
+      }
+
+      if (!chain.some((block) => block.index === state.selectedIndex)) {
+        state.selectedIndex = chain[chain.length - 1].index;
+      }
+    }
+
     function cubeLines(block) {
       const index = '#' + String(block.index).padStart(3, '0');
       const hash = tinyHash(block.hash);
       const recs = 'rec ' + String(block.records?.length || 0).padStart(2, '0');
+      const latest = state.chain.length && block.index === state.chain[state.chain.length - 1].index;
+      const selected = block.index === state.selectedIndex;
+      const pulse = latest && state.animationTick % 8 < 4;
+      const edge = selected ? '[--------]' : pulse ? '*--------*' : '.--------.';
+      const corner = selected ? '*' : '+';
       return [
-        '   .--------.   ',
+        '   ' + edge + '   ',
         '  / ' + fit(index, 5) + ' /|  ',
-        ' +--------+ |  ',
-        ' | ' + fit(hash, 6) + ' | +  ',
+        ' ' + corner + '--------' + corner + ' |  ',
+        ' | ' + fit(hash, 6) + ' | ' + corner + '  ',
         ' | ' + fit(recs, 6) + ' |/   ',
-        ' +--------+    '
+        ' ' + corner + '--------' + corner + '    '
       ];
     }
 
+    function linkFrame(index) {
+      const frames = ['==o==o==>', '=o==o===>', 'o==o====>', '=o==o===>'];
+      return frames[(state.animationTick + index) % frames.length];
+    }
+
     function renderChainArt(blocks, validation) {
-      const visible = blocks.length > 5 ? blocks.slice(-5) : blocks;
+      const visible = visibleBlocks(blocks);
       const status = validation.valid ? 'CHAIN VALID' : 'CHAIN BROKEN';
+      const selected = blocks.find((block) => block.index === state.selectedIndex);
       const rows = [
         '+---------------------------- GOCHAIN ASCII VIEW -----------------------------+',
-        '| cada cubo e um bloco; cada ==o==o== e um elo pelo previousHash             |',
+        '| click nos cubos ou use <- ->; cada elo animado aponta pelo previousHash     |',
         '| status: ' + fit(status, 66) + '|',
         '+----------------------------------------------------------------------------+',
         ''
@@ -463,10 +503,15 @@ ZZZzz /,.-''      -.  ;-;;
         cubes.forEach((cube, index) => {
           row += cube[lineIndex];
           if (index < cubes.length - 1) {
-            row += lineIndex === 2 || lineIndex === 3 ? '==o==o==>' : '         ';
+            row += lineIndex === 2 || lineIndex === 3 ? linkFrame(index + lineIndex) : '         ';
           }
         });
         rows.push(row);
+      }
+
+      if (selected) {
+        rows.push('');
+        rows.push('selected block #' + selected.index + ' | hash ' + shortHash(selected.hash) + ' | records ' + selected.records.length);
       }
 
       if (blocks.length > visible.length) {
@@ -479,11 +524,13 @@ ZZZzz /,.-''      -.  ;-;;
 
     function renderSummary(chain, pending, validation) {
       const latest = chain[chain.length - 1];
+      const selected = chain.find((block) => block.index === state.selectedIndex) || latest;
       return box('CURRENT STATE', [
         'height........: ' + (chain.length ? chain.length - 1 : 0),
         'pending.......: ' + pending.length,
         'validation....: ' + (validation.valid ? 'OK' : 'FAILED'),
         'latest hash...: ' + shortHash(latest && latest.hash),
+        'selected......: ' + (selected ? '#' + selected.index + ' / ' + selected.records.length + ' records' : '-'),
         'next action...: ' + (pending.length ? 'PF2 MINE-BLOCK' : 'PF1 ADD-RECORD')
       ], 80);
     }
@@ -496,7 +543,8 @@ ZZZzz /,.-''      -.  ;-;;
 
       const rows = [];
       [...blocks].reverse().forEach((block) => {
-        rows.push('BLOCK #' + block.index + '  nonce=' + block.nonce + '  difficulty=' + block.difficulty);
+        const marker = block.index === state.selectedIndex ? '>> ' : '   ';
+        rows.push(marker + 'BLOCK #' + block.index + '  nonce=' + block.nonce + '  difficulty=' + block.difficulty);
         rows.push('  hash : ' + block.hash);
         rows.push('  prev : ' + block.previousHash);
         rows.push('  time : ' + formatDate(block.timestamp));
@@ -523,6 +571,11 @@ ZZZzz /,.-''      -.  ;-;;
       $('pending').textContent = box('PENDING QUEUE', rows, 58);
     }
 
+    function renderLiveAscii() {
+      $('chain-art').textContent = renderChainArt(state.chain, state.validation);
+      $('summary-art').textContent = renderSummary(state.chain, state.pending, state.validation);
+    }
+
     async function load() {
       const [chain, pending, validation] = await Promise.all([
         request('/chain'),
@@ -530,10 +583,39 @@ ZZZzz /,.-''      -.  ;-;;
         request('/validate')
       ]);
 
-      $('chain-art').textContent = renderChainArt(chain, validation);
-      $('summary-art').textContent = renderSummary(chain, pending, validation);
+      state.chain = chain;
+      state.pending = pending;
+      state.validation = validation;
+      ensureSelection(chain);
+      renderLiveAscii();
       renderBlocks(chain);
       renderPending(pending);
+    }
+
+    function moveSelection(delta) {
+      if (!state.chain.length) return;
+      ensureSelection(state.chain);
+      const current = state.chain.findIndex((block) => block.index === state.selectedIndex);
+      const next = Math.max(0, Math.min(state.chain.length - 1, current + delta));
+      state.selectedIndex = state.chain[next].index;
+      renderLiveAscii();
+      renderBlocks(state.chain);
+      setStatus('bloco #' + state.selectedIndex + ' selecionado', 'ok');
+    }
+
+    function selectVisibleBlock(event) {
+      const visible = visibleBlocks(state.chain);
+      if (!visible.length) return;
+      const target = $('chain-art');
+      const rect = target.getBoundingClientRect();
+      const x = event.clientX - rect.left + target.scrollLeft;
+      const width = target.scrollWidth || rect.width;
+      const slot = Math.max(0, Math.min(visible.length - 1, Math.floor((x / width) * visible.length)));
+      state.selectedIndex = visible[slot].index;
+      renderLiveAscii();
+      renderBlocks(state.chain);
+      setStatus('bloco #' + state.selectedIndex + ' selecionado', 'ok');
+      target.focus();
     }
 
     async function run(action, success) {
@@ -576,6 +658,37 @@ ZZZzz /,.-''      -.  ;-;;
     $('validate-now').addEventListener('click', () => {
       run(() => Promise.resolve(), 'validacao atualizada');
     });
+
+    $('chain-art').addEventListener('click', selectVisibleBlock);
+    $('chain-art').addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        moveSelection(-1);
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        moveSelection(1);
+      }
+    });
+
+    window.addEventListener('keydown', (event) => {
+      if (event.target.matches('input, textarea')) return;
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        moveSelection(-1);
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        moveSelection(1);
+      }
+    });
+
+    window.setInterval(() => {
+      state.animationTick = (state.animationTick + 1) % 100000;
+      if (state.chain.length) {
+        renderLiveAscii();
+      }
+    }, 180);
 
     updateClock();
     window.setInterval(updateClock, 1000);
