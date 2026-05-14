@@ -77,7 +77,7 @@ const explorerHTML = `<!doctype html>
 
     .ascii-stage {
       display: grid;
-      grid-template-columns: minmax(180px, 0.52fr) minmax(320px, 1fr);
+      grid-template-columns: minmax(150px, 0.34fr) minmax(0, 1fr);
       gap: clamp(20px, 5vw, 54px);
       align-items: end;
       margin-bottom: 18px;
@@ -89,17 +89,16 @@ const explorerHTML = `<!doctype html>
       margin: 0;
       white-space: pre;
       line-height: 1.16;
-      overflow-x: auto;
     }
 
     .ascii-cat {
       color: var(--text);
-      font-size: clamp(10px, 1.55vw, 18px);
+      font-size: clamp(9px, 1vw, 13px);
     }
 
     .ascii-logo {
       font-weight: 800;
-      font-size: clamp(12px, 1.9vw, 24px);
+      font-size: clamp(8px, 1vw, 13px);
     }
 
     .ascii-red {
@@ -143,6 +142,8 @@ const explorerHTML = `<!doctype html>
       background: transparent;
       font-size: clamp(11px, 1.42vw, 15px);
       margin-bottom: 16px;
+      overflow-x: auto;
+      overflow-y: hidden;
     }
 
     .ascii-output.is-blue {
