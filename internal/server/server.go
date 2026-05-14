@@ -21,6 +21,8 @@ type recordRequest struct {
 func NewHandler(store blockchain.Store) http.Handler {
 	api := &API{store: store}
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /{$}", api.explorer)
+	mux.HandleFunc("GET /explorer", api.explorer)
 	mux.HandleFunc("GET /health", api.health)
 	mux.HandleFunc("GET /chain", api.chain)
 	mux.HandleFunc("GET /pending", api.pending)
@@ -28,6 +30,12 @@ func NewHandler(store blockchain.Store) http.Handler {
 	mux.HandleFunc("POST /mine", api.mine)
 	mux.HandleFunc("GET /validate", api.validate)
 	return mux
+}
+
+func (api *API) explorer(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(explorerHTML))
 }
 
 func (api *API) health(w http.ResponseWriter, _ *http.Request) {

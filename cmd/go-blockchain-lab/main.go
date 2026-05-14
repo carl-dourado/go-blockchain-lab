@@ -171,6 +171,7 @@ func serve(args []string) error {
 	}
 
 	fmt.Printf("go-blockchain-lab listening on http://%s\n", *addr)
+	fmt.Printf("explorer available at http://%s\n", *addr)
 	return http.ListenAndServe(*addr, server.NewHandler(store))
 }
 

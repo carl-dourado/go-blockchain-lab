@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/carl-dourado/go-blockchain-lab/internal/blockchain"
@@ -60,5 +61,26 @@ func TestAPIMineRejectsEmptyPendingQueue(t *testing.T) {
 
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("expected status 400, got %d", response.Code)
+	}
+}
+
+func TestExplorerPageServed(t *testing.T) {
+	handler := NewHandler(blockchain.NewStore(t.TempDir()))
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	response := httptest.NewRecorder()
+
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", response.Code)
+	}
+
+	contentType := response.Header().Get("Content-Type")
+	if !strings.Contains(contentType, "text/html") {
+		t.Fatalf("expected html content type, got %q", contentType)
+	}
+
+	if !strings.Contains(response.Body.String(), "Go Blockchain Lab") {
+		t.Fatal("expected explorer page to contain app title")
 	}
 }
