@@ -294,7 +294,7 @@ const explorerHTML = `<!doctype html>
           <div class="terminal-menu-row">
             <span>File</span>
             <span>Options</span>
-            <span>Keypad</span>
+            <span>Keyboard</span>
           </div>
           <div class="terminal-menu-row">
             <span>Terminal</span>
@@ -335,23 +335,24 @@ ZZZzz /,.-''      -.  ;-;;
 +----------------+</pre>
 
     <section class="terminal-form" aria-label="Comandos do lab">
-      <pre class="ascii-output">+--------------------------- COMMAND INPUT ---------------------------+
-| 1. add record     2. mine pending records     3. validate chain    |
+      <pre class="ascii-output">+--------------------------- PC KEYBOARD -----------------------------+
+| Enter/Ctrl+Enter add record | M mine | V validate | R refresh       |
+| Left/Right select block     | Click cube selects block              |
 +---------------------------------------------------------------------+</pre>
       <form id="record-form">
         <label class="terminal-field">
-          <span>AUTHOR ===&gt;</span>
+          <span>author:</span>
           <input id="author" value="carlos" autocomplete="off">
         </label>
         <label class="terminal-field">
-          <span>DATA   ===&gt;</span>
+          <span>data:</span>
           <textarea id="data">transfer 10 from alice to bob</textarea>
         </label>
         <div class="terminal-actions">
-          <button type="submit">PF1 ADD-RECORD</button>
-          <button id="mine" type="button">PF2 MINE-BLOCK</button>
-          <button id="validate-now" type="button">PF3 VALIDATE</button>
-          <button id="refresh" type="button">PF5 REFRESH</button>
+          <button type="submit">Add record</button>
+          <button id="mine" type="button">Mine block</button>
+          <button id="validate-now" type="button">Validate</button>
+          <button id="refresh" type="button">Refresh</button>
         </div>
       </form>
       <p class="status" id="status"></p>
@@ -367,7 +368,7 @@ ZZZzz /,.-''      -.  ;-;;
     </section>
 
     <footer class="terminal-status">
-      <span>Logon ===&gt; <b id="prompt-status">READY</b><i class="prompt-cursor" aria-hidden="true"></i></span>
+      <span>Status: <b id="prompt-status">READY</b><i class="prompt-cursor" aria-hidden="true"></i></span>
       <span>RUNNING  GOCHAIN</span>
     </footer>
   </main>
@@ -531,7 +532,7 @@ ZZZzz /,.-''      -.  ;-;;
         'validation....: ' + (validation.valid ? 'OK' : 'FAILED'),
         'latest hash...: ' + shortHash(latest && latest.hash),
         'selected......: ' + (selected ? '#' + selected.index + ' / ' + selected.records.length + ' records' : '-'),
-        'next action...: ' + (pending.length ? 'PF2 MINE-BLOCK' : 'PF1 ADD-RECORD')
+        'next action...: ' + (pending.length ? 'press M to mine' : 'press Enter to add')
       ], 80);
     }
 
@@ -659,6 +660,13 @@ ZZZzz /,.-''      -.  ;-;;
       run(() => Promise.resolve(), 'validacao atualizada');
     });
 
+    $('data').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        $('record-form').requestSubmit();
+      }
+    });
+
     $('chain-art').addEventListener('click', selectVisibleBlock);
     $('chain-art').addEventListener('keydown', (event) => {
       if (event.key === 'ArrowLeft') {
@@ -680,6 +688,20 @@ ZZZzz /,.-''      -.  ;-;;
       if (event.key === 'ArrowRight') {
         event.preventDefault();
         moveSelection(1);
+      }
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === 'm') {
+        event.preventDefault();
+        $('mine').click();
+      }
+      if (key === 'v') {
+        event.preventDefault();
+        $('validate-now').click();
+      }
+      if (key === 'r') {
+        event.preventDefault();
+        $('refresh').click();
       }
     });
 

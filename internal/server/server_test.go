@@ -92,4 +92,8 @@ func TestExplorerPageServed(t *testing.T) {
 	if !strings.Contains(body, "animationTick") || !strings.Contains(body, "selectVisibleBlock") {
 		t.Fatal("expected explorer page to contain animated interactive ASCII chain")
 	}
+
+	if !strings.Contains(body, "PC KEYBOARD") || strings.Contains(body, "PF1") || strings.Contains(body, "PF2") {
+		t.Fatal("expected explorer page to expose normal PC keyboard commands")
+	}
 }
