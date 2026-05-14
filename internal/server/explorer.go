@@ -1,7 +1,7 @@
 package server
 
 const explorerHTML = `<!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -72,6 +72,13 @@ const explorerHTML = `<!doctype html>
       line-height: 0.95;
     }
 
+    .hero-copy {
+      color: var(--muted);
+      margin-top: 10px;
+      max-width: 760px;
+      line-height: 1.55;
+    }
+
     .toolbar {
       display: flex;
       gap: 10px;
@@ -86,8 +93,16 @@ const explorerHTML = `<!doctype html>
       margin-bottom: 14px;
     }
 
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
     .panel,
     .stat,
+    .action-card,
     .block,
     .record {
       border: 1px solid var(--line);
@@ -113,6 +128,38 @@ const explorerHTML = `<!doctype html>
       overflow-wrap: anywhere;
     }
 
+    .action-card {
+      padding: 16px;
+    }
+
+    .step-label {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border: 1px solid rgba(0, 173, 216, 0.42);
+      border-radius: 999px;
+      color: var(--accent);
+      padding: 4px 9px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .action-card h2 {
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .action-card p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    .action-card strong {
+      color: var(--text);
+    }
+
     .panel {
       padding: 18px;
       margin-bottom: 14px;
@@ -131,10 +178,15 @@ const explorerHTML = `<!doctype html>
       padding: 18px 18px 0;
     }
 
+    .visual-head h2 {
+      font-size: 22px;
+    }
+
     .visual-head p {
       color: var(--muted);
       font-size: 13px;
       margin-top: 4px;
+      line-height: 1.45;
     }
 
     .visual-badge {
@@ -176,13 +228,13 @@ const explorerHTML = `<!doctype html>
       color: var(--muted);
       font-size: 13px;
       margin-top: 4px;
+      line-height: 1.45;
     }
 
     form {
       display: grid;
-      grid-template-columns: minmax(140px, 220px) 1fr auto;
+      grid-template-columns: 1fr;
       gap: 10px;
-      align-items: end;
     }
 
     label {
@@ -216,6 +268,7 @@ const explorerHTML = `<!doctype html>
       padding: 12px 14px;
       cursor: pointer;
       min-height: 44px;
+      width: fit-content;
     }
 
     button.secondary {
@@ -348,6 +401,7 @@ const explorerHTML = `<!doctype html>
       }
 
       .grid,
+      .action-grid,
       form,
       .layout {
         grid-template-columns: 1fr;
@@ -367,62 +421,75 @@ const explorerHTML = `<!doctype html>
   <main class="shell">
     <header>
       <div>
-        <p class="eyebrow">local blockchain explorer</p>
+        <p class="eyebrow">blockchain local em Go</p>
         <h1>Go Blockchain Lab</h1>
+        <p class="hero-copy">Fluxo deste lab: criar um registro, minerar um bloco e validar se a corrente ainda bate com os hashes.</p>
       </div>
       <div class="toolbar">
         <button class="secondary" id="refresh" type="button">refresh</button>
-        <button id="mine" type="button">mine pending</button>
       </div>
     </header>
-
-    <section class="grid" aria-label="chain summary">
-      <article class="stat"><span>height</span><strong id="height">-</strong></article>
-      <article class="stat"><span>pending</span><strong id="pending-count">-</strong></article>
-      <article class="stat"><span>valid</span><strong id="valid">-</strong></article>
-      <article class="stat"><span>latest hash</span><strong class="hash" id="latest-hash">-</strong></article>
-    </section>
 
     <section class="panel visual-panel">
       <div class="visual-head">
         <div>
-          <h2>Chain Visualizer</h2>
-          <p>Blocks are cubes; hashes are the chain links between them.</p>
+          <h2>Corrente de blocos</h2>
+          <p>Cada cubo e um bloco. Os elos representam a ligacao pelo hash anterior.</p>
         </div>
-        <span class="visual-badge" id="visual-status">waiting for chain</span>
+        <span class="visual-badge" id="visual-status">carregando cadeia</span>
       </div>
       <div class="chain-canvas-wrap">
         <canvas id="chain-canvas" width="1120" height="330" aria-label="Animated blockchain cubes"></canvas>
       </div>
     </section>
 
-    <section class="panel">
-      <div class="panel-head">
-        <div>
-          <h2>Add record</h2>
-          <p>Records stay pending until a new block is mined.</p>
-        </div>
-      </div>
-      <form id="record-form">
-        <label>
-          author
-          <input id="author" value="carlos" autocomplete="off">
-        </label>
-        <label>
-          data
-          <textarea id="data">transfer 10 from alice to bob</textarea>
-        </label>
-        <button type="submit">add</button>
-      </form>
-      <p class="status" id="status"></p>
+    <section class="grid" aria-label="Resumo da cadeia">
+      <article class="stat"><span>altura</span><strong id="height">-</strong></article>
+      <article class="stat"><span>pendentes</span><strong id="pending-count">-</strong></article>
+      <article class="stat"><span>validacao</span><strong id="valid">-</strong></article>
+      <article class="stat"><span>ultimo hash</span><strong class="hash" id="latest-hash">-</strong></article>
+    </section>
+
+    <section class="action-grid" aria-label="Fluxo do lab">
+      <article class="action-card">
+        <span class="step-label">1. registro</span>
+        <h2>Criar dado pendente</h2>
+        <p>O dado entra na fila. Ele ainda nao faz parte da cadeia.</p>
+        <form id="record-form">
+          <label>
+            autor
+            <input id="author" value="carlos" autocomplete="off">
+          </label>
+          <label>
+            dado
+            <textarea id="data">transfer 10 from alice to bob</textarea>
+          </label>
+          <button type="submit">adicionar</button>
+        </form>
+        <p class="status" id="status"></p>
+      </article>
+
+      <article class="action-card">
+        <span class="step-label">2. mineracao</span>
+        <h2>Fechar novo bloco</h2>
+        <p><strong id="mine-count">0</strong> registros esperam para virar bloco.</p>
+        <button id="mine" type="button">minerar pendentes</button>
+      </article>
+
+      <article class="action-card">
+        <span class="step-label">3. validacao</span>
+        <h2>Conferir corrente</h2>
+        <p id="validation-note">A cadeia sera recalculada pelos hashes.</p>
+        <button class="secondary" id="validate-now" type="button">validar agora</button>
+      </article>
     </section>
 
     <section class="layout">
       <section class="panel">
         <div class="panel-head">
           <div>
-            <h2>Blocks</h2>
-            <p>Each block links to the previous hash.</p>
+            <h2>Blocos minerados</h2>
+            <p>O bloco mais novo aparece primeiro. O hash anterior aponta para o bloco de baixo.</p>
           </div>
         </div>
         <div class="list" id="blocks"></div>
@@ -431,8 +498,8 @@ const explorerHTML = `<!doctype html>
       <aside class="panel">
         <div class="panel-head">
           <div>
-            <h2>Pending</h2>
-            <p>These records are not in a block yet.</p>
+            <h2>Fila pendente</h2>
+            <p>Estes registros ainda nao foram minerados.</p>
           </div>
         </div>
         <div class="list" id="pending"></div>
@@ -503,7 +570,7 @@ const explorerHTML = `<!doctype html>
       if (!blocks.length) {
         const empty = document.createElement('p');
         empty.className = 'empty';
-        empty.textContent = 'no blocks';
+        empty.textContent = 'nenhum bloco encontrado';
         list.appendChild(empty);
         return;
       }
@@ -522,12 +589,12 @@ const explorerHTML = `<!doctype html>
 
         const text = document.createElement('div');
         const title = document.createElement('h3');
-        title.textContent = block.index === 0 ? 'genesis block' : 'block #' + block.index;
+        title.textContent = block.index === 0 ? 'bloco genesis' : 'bloco #' + block.index;
         text.appendChild(title);
 
         const hash = document.createElement('p');
         hash.className = 'hash';
-        hash.textContent = 'hash ' + block.hash;
+        hash.textContent = 'hash atual: ' + block.hash;
         text.appendChild(hash);
         top.appendChild(text);
 
@@ -540,12 +607,12 @@ const explorerHTML = `<!doctype html>
 
         const prev = document.createElement('p');
         prev.className = 'hash';
-        prev.textContent = 'prev ' + block.previousHash;
+        prev.textContent = 'hash anterior: ' + block.previousHash;
         item.appendChild(prev);
 
         const meta = document.createElement('p');
         meta.className = 'muted';
-        meta.textContent = formatDate(block.timestamp) + ' | difficulty ' + block.difficulty;
+        meta.textContent = formatDate(block.timestamp) + ' | dificuldade ' + block.difficulty + ' | registros ' + block.records.length;
         item.appendChild(meta);
 
         const records = document.createElement('div');
@@ -564,7 +631,7 @@ const explorerHTML = `<!doctype html>
       if (!records.length) {
         const empty = document.createElement('p');
         empty.className = 'empty';
-        empty.textContent = 'no pending records';
+        empty.textContent = 'sem registros pendentes';
         list.appendChild(empty);
         return;
       }
@@ -702,7 +769,7 @@ const explorerHTML = `<!doctype html>
         ctx.fillStyle = '#8ba0ba';
         ctx.font = '14px ui-monospace, monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('no blocks yet', width * 0.5, height * 0.5);
+        ctx.fillText('nenhum bloco ainda', width * 0.5, height * 0.5);
         return;
       }
 
@@ -738,7 +805,7 @@ const explorerHTML = `<!doctype html>
         ctx.fillStyle = '#8ba0ba';
         ctx.font = '12px ui-monospace, monospace';
         ctx.textAlign = 'left';
-        ctx.fillText('showing latest ' + blocks.length + ' of ' + state.chain.length + ' blocks', 18, height - 18);
+        ctx.fillText('mostrando os ultimos ' + blocks.length + ' de ' + state.chain.length + ' blocos', 18, height - 18);
       }
     }
 
@@ -766,11 +833,15 @@ const explorerHTML = `<!doctype html>
 
       $('height').textContent = chain.length ? chain.length - 1 : 0;
       $('pending-count').textContent = pending.length;
-      $('valid').textContent = validation.valid ? 'yes' : 'no';
+      $('mine-count').textContent = pending.length;
+      $('valid').textContent = validation.valid ? 'ok' : 'falhou';
       $('valid').style.color = validation.valid ? 'var(--ok)' : 'var(--bad)';
       $('latest-hash').textContent = shortHash(latest && latest.hash);
-      $('visual-status').textContent = validation.valid ? 'chain links locked' : 'broken chain detected';
+      $('visual-status').textContent = validation.valid ? 'corrente valida' : 'corrente quebrada';
       $('visual-status').style.color = validation.valid ? 'var(--muted)' : 'var(--bad)';
+      $('validation-note').textContent = validation.valid
+        ? 'Hashes e ligacoes batem. Nenhum bloco parece adulterado.'
+        : 'Algum hash ou elo nao bate. A cadeia precisa ser revisada.';
 
       state.chain = chain;
       state.validation = validation;
@@ -804,16 +875,20 @@ const explorerHTML = `<!doctype html>
             data: $('data').value
           })
         }),
-        'record added to pending queue'
+        'registro entrou na fila pendente'
       );
     });
 
     $('mine').addEventListener('click', () => {
-      run(() => request('/mine', { method: 'POST' }), 'block mined');
+      run(() => request('/mine', { method: 'POST' }), 'bloco minerado e ligado na corrente');
     });
 
     $('refresh').addEventListener('click', () => {
-      run(() => Promise.resolve(), 'refreshed');
+      run(() => Promise.resolve(), 'estado atualizado');
+    });
+
+    $('validate-now').addEventListener('click', () => {
+      run(() => Promise.resolve(), 'validacao atualizada');
     });
 
     load().catch((error) => setStatus(error.message, 'bad'));
