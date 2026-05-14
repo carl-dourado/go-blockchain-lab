@@ -9,16 +9,20 @@ const explorerHTML = `<!doctype html>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #08111f;
-      --panel: #101a2c;
-      --panel-strong: #16233a;
-      --text: #e5edf8;
-      --muted: #8ba0ba;
-      --line: #243553;
-      --accent: #00add8;
-      --ok: #32d583;
-      --warn: #fdb022;
-      --bad: #f97066;
+      --bg: #020707;
+      --screen: #171717;
+      --panel: #111616;
+      --panel-strong: #202020;
+      --text: #f4f4f4;
+      --muted: #a7b4b4;
+      --line: #77d7e8;
+      --accent: #1499ff;
+      --blue: #1499ff;
+      --yellow: #ffff00;
+      --red: #ff2020;
+      --ok: #65ff8f;
+      --warn: #ffff00;
+      --bad: #ff4d4d;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
 
@@ -28,8 +32,13 @@ const explorerHTML = `<!doctype html>
 
     body {
       margin: 0;
-      background: radial-gradient(circle at 50% -10%, rgba(0, 173, 216, 0.22), transparent 34rem), var(--bg);
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at left top, rgba(20, 153, 255, 0.24), transparent 23rem),
+        radial-gradient(circle at right bottom, rgba(119, 215, 232, 0.12), transparent 28rem),
+        var(--bg);
       color: var(--text);
+      padding: 5px;
     }
 
     button,
@@ -39,17 +48,21 @@ const explorerHTML = `<!doctype html>
     }
 
     .shell {
-      width: min(1120px, calc(100% - 32px));
+      width: min(1180px, 100%);
       margin: 0 auto;
-      padding: 42px 0;
+      min-height: calc(100vh - 10px);
+      padding: 24px 24px 18px;
+      background: var(--screen);
+      border: 1px solid rgba(119, 215, 232, 0.92);
+      box-shadow:
+        0 0 0 1px rgba(20, 153, 255, 0.14),
+        0 0 30px rgba(20, 153, 255, 0.22),
+        inset 0 0 32px rgba(20, 153, 255, 0.04);
+      border-radius: 10px 10px 0 0;
     }
 
     header {
-      display: flex;
-      justify-content: space-between;
-      gap: 18px;
-      align-items: end;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     h1,
@@ -60,23 +73,114 @@ const explorerHTML = `<!doctype html>
     }
 
     .eyebrow {
-      color: var(--accent);
-      font-size: 12px;
+      color: var(--text);
+      font-size: 16px;
       letter-spacing: 0;
-      text-transform: uppercase;
     }
 
     h1 {
       margin-top: 8px;
-      font-size: clamp(30px, 6vw, 58px);
+      font-size: clamp(24px, 5vw, 50px);
       line-height: 0.95;
     }
 
     .hero-copy {
-      color: var(--muted);
+      color: var(--yellow);
       margin-top: 10px;
       max-width: 760px;
       line-height: 1.55;
+    }
+
+    .terminal-menu {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--text);
+      font-size: clamp(13px, 2vw, 16px);
+      line-height: 1.55;
+      margin-bottom: 28px;
+    }
+
+    .terminal-menu-left,
+    .terminal-clock {
+      display: grid;
+      gap: 2px;
+    }
+
+    .terminal-menu-row {
+      display: flex;
+      gap: clamp(20px, 5vw, 34px);
+    }
+
+    .terminal-clock {
+      min-width: 170px;
+      justify-items: start;
+    }
+
+    .terminal-clock span {
+      display: grid;
+      grid-template-columns: 50px 1fr;
+      gap: 10px;
+    }
+
+    .ascii-stage {
+      display: grid;
+      grid-template-columns: minmax(180px, 0.52fr) minmax(320px, 1fr);
+      gap: clamp(20px, 5vw, 54px);
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .ascii-cat,
+    .ascii-logo {
+      margin: 0;
+      white-space: pre;
+      line-height: 1.12;
+      font-size: clamp(10px, 1.55vw, 18px);
+    }
+
+    .ascii-cat {
+      color: var(--text);
+    }
+
+    .ascii-logo {
+      font-weight: 800;
+      font-size: clamp(12px, 1.9vw, 24px);
+    }
+
+    .ascii-red {
+      color: var(--red);
+    }
+
+    .ascii-white {
+      color: var(--text);
+    }
+
+    .ascii-blue {
+      color: var(--blue);
+    }
+
+    .terminal-subtitle {
+      display: grid;
+      gap: 8px;
+      margin-left: clamp(12px, 7vw, 70px);
+      margin-bottom: 18px;
+      line-height: 1.35;
+    }
+
+    .terminal-subtitle h1 {
+      color: var(--yellow);
+      font-size: clamp(18px, 2.5vw, 24px);
+      margin: 0;
+    }
+
+    .terminal-yellow {
+      color: var(--yellow);
+      font-weight: 800;
+    }
+
+    .terminal-blue {
+      color: var(--blue);
     }
 
     .toolbar {
@@ -106,8 +210,8 @@ const explorerHTML = `<!doctype html>
     .block,
     .record {
       border: 1px solid var(--line);
-      background: rgba(16, 26, 44, 0.88);
-      border-radius: 8px;
+      background: rgba(8, 12, 12, 0.86);
+      border-radius: 0;
     }
 
     .stat {
@@ -117,14 +221,14 @@ const explorerHTML = `<!doctype html>
 
     .stat span {
       display: block;
-      color: var(--muted);
+      color: var(--blue);
       font-size: 12px;
       margin-bottom: 10px;
     }
 
     .stat strong {
       font-size: 26px;
-      color: var(--text);
+      color: var(--yellow);
       overflow-wrap: anywhere;
     }
 
@@ -136,9 +240,9 @@ const explorerHTML = `<!doctype html>
       display: inline-flex;
       align-items: center;
       min-height: 26px;
-      border: 1px solid rgba(0, 173, 216, 0.42);
-      border-radius: 999px;
-      color: var(--accent);
+      border: 1px solid rgba(20, 153, 255, 0.72);
+      border-radius: 0;
+      color: var(--yellow);
       padding: 4px 9px;
       font-size: 12px;
       margin-bottom: 12px;
@@ -147,10 +251,11 @@ const explorerHTML = `<!doctype html>
     .action-card h2 {
       font-size: 18px;
       margin-bottom: 6px;
+      color: var(--blue);
     }
 
     .action-card p {
-      color: var(--muted);
+      color: var(--text);
       font-size: 13px;
       line-height: 1.45;
       margin-bottom: 14px;
@@ -180,10 +285,11 @@ const explorerHTML = `<!doctype html>
 
     .visual-head h2 {
       font-size: 22px;
+      color: var(--blue);
     }
 
     .visual-head p {
-      color: var(--muted);
+      color: var(--yellow);
       font-size: 13px;
       margin-top: 4px;
       line-height: 1.45;
@@ -191,8 +297,8 @@ const explorerHTML = `<!doctype html>
 
     .visual-badge {
       border: 1px solid var(--line);
-      border-radius: 999px;
-      color: var(--muted);
+      border-radius: 0;
+      color: var(--yellow);
       padding: 6px 10px;
       font-size: 12px;
       white-space: nowrap;
@@ -204,10 +310,11 @@ const explorerHTML = `<!doctype html>
       margin-top: 10px;
       border-top: 1px solid rgba(36, 53, 83, 0.62);
       background:
-        linear-gradient(rgba(229, 237, 248, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(229, 237, 248, 0.035) 1px, transparent 1px),
-        radial-gradient(circle at 50% 30%, rgba(0, 173, 216, 0.12), transparent 26rem);
-      background-size: 34px 34px, 34px 34px, auto;
+        linear-gradient(rgba(20, 153, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 153, 255, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 50% 30%, rgba(20, 153, 255, 0.12), transparent 24rem),
+        #101010;
+      background-size: 28px 28px, 28px 28px, auto, auto;
     }
 
     #chain-canvas {
@@ -225,7 +332,7 @@ const explorerHTML = `<!doctype html>
     }
 
     .panel-head p {
-      color: var(--muted);
+      color: var(--yellow);
       font-size: 13px;
       margin-top: 4px;
       line-height: 1.45;
@@ -240,7 +347,7 @@ const explorerHTML = `<!doctype html>
     label {
       display: grid;
       gap: 6px;
-      color: var(--muted);
+      color: var(--blue);
       font-size: 12px;
     }
 
@@ -248,8 +355,8 @@ const explorerHTML = `<!doctype html>
     textarea {
       width: 100%;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #07101e;
+      border-radius: 0;
+      background: #050505;
       color: var(--text);
       padding: 12px;
       outline: none;
@@ -262,9 +369,9 @@ const explorerHTML = `<!doctype html>
 
     button {
       border: 1px solid rgba(0, 173, 216, 0.42);
-      border-radius: 8px;
-      color: #00121a;
-      background: var(--accent);
+      border-radius: 0;
+      color: #050505;
+      background: var(--yellow);
       padding: 12px 14px;
       cursor: pointer;
       min-height: 44px;
@@ -273,7 +380,7 @@ const explorerHTML = `<!doctype html>
 
     button.secondary {
       background: transparent;
-      color: var(--text);
+      color: var(--yellow);
       border-color: var(--line);
     }
 
@@ -284,7 +391,7 @@ const explorerHTML = `<!doctype html>
 
     .status {
       min-height: 24px;
-      color: var(--muted);
+      color: var(--yellow);
       font-size: 13px;
       margin-top: 12px;
     }
@@ -330,9 +437,9 @@ const explorerHTML = `<!doctype html>
       height: 44px;
       display: grid;
       place-items: center;
-      border-radius: 8px;
+      border-radius: 0;
       background: var(--panel-strong);
-      color: var(--accent);
+      color: var(--yellow);
       font-weight: 800;
     }
 
@@ -344,14 +451,15 @@ const explorerHTML = `<!doctype html>
 
     .hash {
       font-size: 12px;
+      color: var(--blue);
     }
 
     .pill {
       display: inline-flex;
       align-items: center;
-      border-radius: 999px;
+      border-radius: 0;
       border: 1px solid var(--line);
-      color: var(--muted);
+      color: var(--yellow);
       padding: 6px 8px;
       font-size: 12px;
       white-space: nowrap;
@@ -365,7 +473,7 @@ const explorerHTML = `<!doctype html>
 
     .record {
       padding: 10px;
-      background: #0b1526;
+      background: #0b0b0b;
     }
 
     .record b {
@@ -376,9 +484,34 @@ const explorerHTML = `<!doctype html>
     .empty {
       color: var(--muted);
       border: 1px dashed var(--line);
-      border-radius: 8px;
+      border-radius: 0;
       padding: 18px;
       text-align: center;
+    }
+
+    .terminal-status {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 18px;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .prompt-cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1.1em;
+      margin-left: 6px;
+      border-left: 2px solid var(--line);
+      transform: translateY(3px);
+      animation: blink 1s steps(2, start) infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
     }
 
     @media (max-width: 820px) {
@@ -389,6 +522,21 @@ const explorerHTML = `<!doctype html>
 
       .toolbar {
         justify-content: start;
+      }
+
+      .terminal-menu,
+      .ascii-stage,
+      .terminal-status {
+        display: grid;
+      }
+
+      .terminal-clock {
+        justify-items: start;
+      }
+
+      .ascii-logo {
+        font-size: clamp(10px, 4vw, 18px);
+        overflow-x: auto;
       }
 
       .visual-head {
@@ -420,13 +568,41 @@ const explorerHTML = `<!doctype html>
 <body>
   <main class="shell">
     <header>
-      <div>
-        <p class="eyebrow">blockchain local em Go</p>
-        <h1>Go Blockchain Lab</h1>
-        <p class="hero-copy">Fluxo deste lab: criar um registro, minerar um bloco e validar se a corrente ainda bate com os hashes.</p>
+      <div class="terminal-menu">
+        <div class="terminal-menu-left">
+          <div class="terminal-menu-row">
+            <span>File</span>
+            <span>Options</span>
+            <span>Keypad</span>
+          </div>
+          <div class="terminal-menu-row">
+            <span>Terminal</span>
+            <span>GOCHAIN</span>
+          </div>
+        </div>
+        <div class="terminal-clock">
+          <span>Date <b id="date-value">--.--.--</b></span>
+          <span>Time <b id="time-value">--:--:--</b></span>
+          <button class="secondary" id="refresh" type="button">refresh</button>
+        </div>
       </div>
-      <div class="toolbar">
-        <button class="secondary" id="refresh" type="button">refresh</button>
+
+      <div class="ascii-stage">
+        <pre class="ascii-cat">      |\      _,,,---,,_
+ZZZzz /,.-''      -.  ;-;;
+     |,4-  ) )-,_. ,\ (  '-'
+    '---''(_/--'  '-'\_)</pre>
+        <pre class="ascii-logo"><span class="ascii-red">   ______   ______</span>   <span class="ascii-white"> ______   __  __</span>   <span class="ascii-blue"> ______   ______   __   __</span>
+<span class="ascii-red">  / ____/  / __  /</span>   <span class="ascii-white">/ ____/  / / / /</span>   <span class="ascii-blue">/ ____/  / __  /  /  | / /</span>
+<span class="ascii-red"> / / __   / / / /</span>   <span class="ascii-white">/ /      / /_/ /</span>   <span class="ascii-blue">/ /      / /_/ /  / /| |/ /</span>
+<span class="ascii-red">/ /_/ /  / /_/ /</span>   <span class="ascii-white">/ /___   / __  /</span>   <span class="ascii-blue">/ /___   / __  /  / / |   /</span>
+<span class="ascii-red">\____/   \____/</span>   <span class="ascii-white">\____/  /_/ /_/</span>   <span class="ascii-blue">\____/  /_/ /_/  /_/  |__/</span></pre>
+      </div>
+
+      <div class="terminal-subtitle">
+        <h1>Go Blockchain Lab</h1>
+        <span class="terminal-yellow">The GOCHAIN 0.1 local blockchain system</span>
+        <span class="terminal-blue">records -> pending queue -> mine block -> validate previous hash</span>
       </div>
     </header>
 
@@ -505,6 +681,11 @@ const explorerHTML = `<!doctype html>
         <div class="list" id="pending"></div>
       </aside>
     </section>
+
+    <footer class="terminal-status">
+      <span>Logon ===&gt; <b id="prompt-status">READY</b><i class="prompt-cursor" aria-hidden="true"></i></span>
+      <span>RUNNING&nbsp;&nbsp;GOCHAIN</span>
+    </footer>
   </main>
 
   <script>
@@ -522,10 +703,21 @@ const explorerHTML = `<!doctype html>
     const canvas = $('chain-canvas');
     const ctx = canvas.getContext('2d');
 
+    function pad(value) {
+      return String(value).padStart(2, '0');
+    }
+
+    function updateClock() {
+      const now = new Date();
+      $('date-value').textContent = pad(now.getDate()) + '.' + pad(now.getMonth() + 1) + '.' + String(now.getFullYear()).slice(-2);
+      $('time-value').textContent = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    }
+
     function setStatus(message, tone = '') {
       const node = $('status');
       node.textContent = message;
       node.className = tone ? 'status ' + tone : 'status';
+      $('prompt-status').textContent = tone === 'bad' ? 'ERROR' : message ? 'OK' : 'READY';
     }
 
     function setBusy(isBusy) {
@@ -891,6 +1083,8 @@ const explorerHTML = `<!doctype html>
       run(() => Promise.resolve(), 'validacao atualizada');
     });
 
+    updateClock();
+    window.setInterval(updateClock, 1000);
     load().catch((error) => setStatus(error.message, 'bad'));
   </script>
 </body>
