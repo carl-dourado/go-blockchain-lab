@@ -84,7 +84,7 @@ func TestExplorerPageServed(t *testing.T) {
 		t.Fatal("expected explorer page to contain app title")
 	}
 
-	if !strings.Contains(response.Body.String(), "chain-canvas") {
-		t.Fatal("expected explorer page to contain chain canvas")
+	if !strings.Contains(response.Body.String(), "chain-art") {
+		t.Fatal("expected explorer page to contain ASCII chain art")
 	}
 }
